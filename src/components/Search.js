@@ -5,22 +5,18 @@ import { simpleAction } from '../actions/simpleAction';
 
 const Search = ({ simpleAction }) => {
     const [query, setQuery] = useState('');
-    console.log('query', query);
 
     const sendCityName = (e) => {
         e.preventDefault();
         simpleAction(query);
     }
+
     const sendCityNameByEnter = (e) => {
         if (e.keyCode === 13) {
             simpleAction(query);
             return false;
         }
     }
-
-    // useEffect(() => {
-    //    // simpleAction(query);
-    // }, [query])
 
     return (
         <div>

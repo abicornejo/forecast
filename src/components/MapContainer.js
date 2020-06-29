@@ -1,7 +1,7 @@
-import React, { Component }  from 'react';
-import { Map, GoogleApiWrapper, Marker } from 'google-map-react';
+import {Map, InfoWindow, Marker, GoogleApiWrapper} from 'google-maps-react';
+import React, { Component} from 'react';
 import HocAux from './../hoc/HocAux';
-
+//import {GoogleApiWrapper} from 'GoogleMapsReactComponent';
 const mapStyles = {
     width: '100%',
     height: '100%',
