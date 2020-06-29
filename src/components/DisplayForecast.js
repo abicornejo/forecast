@@ -1,30 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleMapReact, Map, GoogleApiWrapper, Marker } from 'google-map-react'
+// si timport { GoogleMapReact, Map, GoogleApiWrapper, Marker } from 'google-map-react'
 import { connect } from 'react-redux';
 import axios from 'axios';
-import {simpleAction} from './../actions/simpleAction'
+//import {simpleAction} from './../actions/simpleAction'
 // import GoogleMapReact from 'google-map-react';
 import PropTypes from 'prop-types'
 import { compose } from 'redux';
-
+import IssTracker from './../containers/IssTracker';
 
 const DisplayForecast = ({ search }) => {
     const [foreCastData, setForeCastData] = useState([]);
-    // static defaultProps = {
-    //     center: {
-    //         lat: 59.95,
-    //         lng: 30.33
-    //     },
-    //     zoom: 11
-    // };
+    const [map, setMap] = useState([]);
+
 
     const handleApiLoaded = (map, maps) => {
         // use map and maps objects
     };
 
+
     useEffect(() => {
         (async () => {
             try {
+
                 console.log('search weather', search);
                 const resultSearch = await axios.get(`http://api.openweathermap.org/data/2.5/weather?APPID=74d4d0f36ee698904c98ea64fb2fbe89&q=${search}`);
                 console.log('resultSearch', resultSearch);
@@ -41,6 +38,7 @@ const DisplayForecast = ({ search }) => {
 
     return (
         <div>
+
             <table className="table table-bordered table-striped">
                 <thead>
                 <tr>
@@ -63,17 +61,7 @@ const DisplayForecast = ({ search }) => {
                 </tr>
                 </tbody>
             </table>
-            <GoogleMapReact
-                bootstrapURLKeys={{ key: 'AIzaSyDEqT72zgRTMzif-S3Pz4BXKiMcIu0c9vc' }}
-                defaultCenter={{
-                    lat: foreCastData?.coord?.lat,
-                    lng: foreCastData?.coord?.lon
-                }}
-                defaultZoom={11}
-                yesIWantToUseGoogleMapApiInternals
-                onGoogleApiLoaded={({ map, maps }) => handleApiLoaded(map, maps)}
-            >
-            </GoogleMapReact>
+            <IssTracker></IssTracker>
         </div>
     )
 }
@@ -114,8 +102,9 @@ const mapStateToProps = state => ({
 //         apiKey: 'AIzaSyDEqT72zgRTMzif-S3Pz4BXKiMcIu0c9vc'
 //     })(DisplayForecast));
 
-export default connect(mapStateToProps, null)(
-    GoogleApiWrapper({
-        apiKey: 'AIzaSyDEqT72zgRTMzif-S3Pz4BXKiMcIu0c9vc'
-    })(DisplayForecast)
-);
+// export default connect(mapStateToProps, null)(
+//     GoogleApiWrapper({
+//         apiKey: 'AIzaSyDEqT72zgRTMzif-S3Pz4BXKiMcIu0c9vc'
+//     })(DisplayForecast)
+// );
+export default connect(mapStateToProps, null)(DisplayForecast);
