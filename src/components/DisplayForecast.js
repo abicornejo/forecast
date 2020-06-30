@@ -3,9 +3,9 @@ import {Map, Marker, GoogleApiWrapper} from 'google-maps-react';
 import { connect } from 'react-redux';
 import axios from 'axios';
 
-const LoadingContainer = (props) => (
-    <div>Fancy loading container!</div>
-)
+function LoadingContainer() {
+    return <div>Fancy loading container!</div>
+}
 
 const DisplayForecast = ({ search }) => {
     const [city, setCity] = useState(null);
@@ -18,7 +18,6 @@ const DisplayForecast = ({ search }) => {
                 axios.get(`http://api.openweathermap.org/data/2.5/weather?APPID=d1e84cb66ca1147838f89a129355af31&q=${search}`)
                 .then((data) => {
                     if(data) {
-
                         const newCity = {
                             id: data.data.id,
                             name: data.data.name,
@@ -34,7 +33,6 @@ const DisplayForecast = ({ search }) => {
                         if(!cityExists) {
 
                             listCities.unshift(newCity);
-
                             setListCities(listCities);
                             localStorage.setItem("cities", JSON.stringify(listCities));
                         }
@@ -52,9 +50,8 @@ const DisplayForecast = ({ search }) => {
 
     }, [search]);
 
-    console.log('foreCastData', city);
 
-    const rows = listCities.map((item, index )=>{
+    const rows = listCities.map((item, index ) => {
 
         return  (<tr key={index} onClick={() => selectRowCity(item.id)}>
             <td>{item.name}</td>
@@ -64,13 +61,14 @@ const DisplayForecast = ({ search }) => {
             <td>{item.main.temp_max}</td>
             <td>{item.main.temp_min}</td>
             <td><button onClick={(e)=>removeCity(e,item.id)} type="button" className="btn btn-outline-danger btn-sm">Remove</button></td>
-        </tr>)});
+        </tr>)
+    });
 
     const removeCity = (e, id) => {
         e.preventDefault();
         setListCities(JSON.parse(localStorage.getItem("cities") || "[]"));
         if(listCities.length) {
-            const lstTemp = listCities.filter(city => city.id !== id)
+            const lstTemp = listCities.filter(city => city.id !== id);
             setListCities(lstTemp);
             localStorage.setItem("cities", JSON.stringify(lstTemp));
         }
@@ -107,8 +105,12 @@ const DisplayForecast = ({ search }) => {
                 <div className="col-9" >
                     { city?.coord?.lat ?
                         <Map  google={window.google}
-                              style={{width: '100%', height: '100%'}}
+                              style={{width: '100%', height: '100%', position: 'relative'}}
                               className={'map'}
+                              center={{
+                                  lat: city.coord.lat,
+                                  lng:  city.coord.lon
+                              }}
                               zoom={14}>
                             <Marker
                                 name={city?.name}
