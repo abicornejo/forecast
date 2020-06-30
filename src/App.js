@@ -1,4 +1,4 @@
-import React,{ Component, useState, useEffect } from 'react';
+import React from 'react';
 import Search from './components/Search';
 import DisplayForecast from './components/DisplayForecast';
 import './App.css';

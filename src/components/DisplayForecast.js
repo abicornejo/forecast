@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {Map, InfoWindow, Marker, GoogleApiWrapper} from 'google-maps-react';
+import {Map, Marker, GoogleApiWrapper} from 'google-maps-react';
 import { connect } from 'react-redux';
 import axios from 'axios';
 
@@ -8,99 +8,111 @@ const LoadingContainer = (props) => (
 )
 
 const DisplayForecast = ({ search }) => {
-    const [foreCastData, setForeCastData] = useState([]);
+    const [city, setCity] = useState(null);
     const [listCities, setListCities] = useState([]);
-
-
 
     useEffect(() => {
         (async () => {
             try {
                 setListCities(JSON.parse(localStorage.getItem("cities") || "[]"));
                 axios.get(`http://api.openweathermap.org/data/2.5/weather?APPID=d1e84cb66ca1147838f89a129355af31&q=${search}`)
-                .then((data) => {debugger;
+                .then((data) => {
                     if(data) {
-                        setForeCastData(data.data);
-
-
 
                         const newCity = {
                             id: data.data.id,
                             name: data.data.name,
-                            coords: data.data.coords,
+                            coord: data.data.coord,
                             main: data.data.main
                         }
-                        listCities.push(newCity);
-                        localStorage.setItem("cities", JSON.stringify(listCities));
+                        setCity(newCity);
+                        if(listCities.length === 5){
+                            listCities.pop();
+                        }
+
+                        const cityExists = listCities.find(item => item.id === newCity.id);
+                        if(!cityExists) {
+
+                            listCities.unshift(newCity);
+
+                            setListCities(listCities);
+                            localStorage.setItem("cities", JSON.stringify(listCities));
+                        }
                     }else {
-                        setForeCastData(null);
+                        setCity(null);
                     }
                 })
                 .catch(error => {
-                    setForeCastData(null);
+                    setCity(null);
                 });
             } catch (error) {
-                setForeCastData(null);
+                setCity(null);
             };
         })();
 
     }, [search]);
 
-    console.log('foreCastData', foreCastData);
+    console.log('foreCastData', city);
 
-    // const rows = listCities.map(item, index =>
-    //
-    //           return  (<tr key={index}>
-    //                 <td>{item.name}</td>
-    //                 <td>{item.main.temp}</td>
-    //                 <td>{item.main.pressure}</td>
-    //                 <td>{item.main.humidity}</td>
-    //                 <td>{item.main.temp_max}</td>
-    //                 <td>{item.main.temp_min}</td>
-    //                 <td></td>
-    //             <tr/>);
-    //
-    //
-    // );
-    // const rows = listCities.map((item, index) => {
-    //     return (<tr key={index}>
-    //         <td>{item.name}</td>
-    //          <td>{item.main.temp}</td>
-    //          <td>{item.main.pressure}</td>
-    //          <td>{item.main.humidity}</td>
-    //          <td>{item.main.temp_max}</td>
-    //          <td>{item.main.temp_min}</td>
-    //          <td></td>
-    //      <tr/>);
-    // });
+    const rows = listCities.map((item, index )=>{
+
+        return  (<tr key={index} onClick={() => selectRowCity(item.id)}>
+            <td>{item.name}</td>
+            <td>{item.main.temp}</td>
+            <td>{item.main.pressure}</td>
+            <td>{item.main.humidity}</td>
+            <td>{item.main.temp_max}</td>
+            <td>{item.main.temp_min}</td>
+            <td><button onClick={(e)=>removeCity(e,item.id)} type="button" className="btn btn-outline-danger btn-sm">Remove</button></td>
+        </tr>)});
+
+    const removeCity = (e, id) => {
+        e.preventDefault();
+        setListCities(JSON.parse(localStorage.getItem("cities") || "[]"));
+        if(listCities.length) {
+            const lstTemp = listCities.filter(city => city.id !== id)
+            setListCities(lstTemp);
+            localStorage.setItem("cities", JSON.stringify(lstTemp));
+        }
+    }
+
+    const selectRowCity = (id) => {
+        setListCities(JSON.parse(localStorage.getItem("cities") || "[]"));
+        if(listCities.length) {
+            const citySelected = listCities.find(city => city.id === id);
+            if(citySelected){
+                setCity(citySelected);
+            }
+        }
+    }
 
     return (
         <div>
             <div className="row">
                 <div className="col-3">
                     <div>
-                        <h3>Details</h3>
+                        <h3>Details {city?.name}</h3>
                         <label htmlFor=""><b>Temperature: </b></label>
-                        <span>{foreCastData?.main?.temp}</span><br/>
+                        <span>{city?.main?.temp}</span><br/>
                         <label htmlFor=""><b>Pressure: </b></label>
-                        <span>{foreCastData?.main?.pressure}</span><br/>
+                        <span>{city?.main?.pressure}</span><br/>
                         <label htmlFor=""><b>Humidity: </b></label>
-                        <span>{foreCastData?.main?.humidity}</span><br/>
+                        <span>{city?.main?.humidity}</span><br/>
                         <label htmlFor=""><b>Max temperature: </b></label>
-                        <span>{foreCastData?.main?.temp_max}</span><br/>
+                        <span>{city?.main?.temp_max}</span><br/>
                         <label htmlFor=""><b>Min temperature: </b></label>
-                        <span>{foreCastData?.main?.temp_min}</span>
+                        <span>{city?.main?.temp_min}</span>
                     </div>
                 </div>
-                <div className="col-9">
-                    { foreCastData?.coord?.lat ?
+                <div className="col-9" >
+                    { city?.coord?.lat ?
                         <Map  google={window.google}
-                              style={{width: '100%', height: '100%', position: 'relative'}}
+                              style={{width: '100%', height: '100%'}}
                               className={'map'}
                               zoom={14}>
                             <Marker
-                                name={foreCastData?.name}
-                                position={{lat: foreCastData.coord.lat, lng: foreCastData.coord.lon}} />
+                                name={city?.name}
+                                position={{lat: city.coord.lat, lng: city.coord.lon}} />
                             <Marker />
                         </Map>
                         : null
@@ -110,6 +122,7 @@ const DisplayForecast = ({ search }) => {
                     <table className="table table-bordered table-striped">
                         <thead>
                         <tr>
+                            <th>City</th>
                             <th>Temperature</th>
                             <th>Pressure</th>
                             <th>Humidity</th>
@@ -119,7 +132,7 @@ const DisplayForecast = ({ search }) => {
                         </tr>
                         </thead>
                         <tbody id="myTable">
-                        {/*{rows}*/}
+                        {rows}
                         </tbody>
                     </table>
                 </div>
