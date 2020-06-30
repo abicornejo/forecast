@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {Map, Marker, GoogleApiWrapper} from 'google-maps-react';
 import { connect } from 'react-redux';
 import axios from 'axios';
+import Details from './../components/Details';
 
 function LoadingContainer() {
     return <div>Fancy loading container!</div>
@@ -50,7 +51,6 @@ const DisplayForecast = ({ search }) => {
 
     }, [search]);
 
-
     const rows = listCities.map((item, index ) => {
 
         return  (<tr key={index} onClick={() => selectRowCity(item.id)}>
@@ -88,19 +88,7 @@ const DisplayForecast = ({ search }) => {
         <div>
             <div className="row">
                 <div className="col-3">
-                    <div>
-                        <h3>Details {city?.name}</h3>
-                        <label htmlFor=""><b>Temperature: </b></label>
-                        <span>{city?.main?.temp}</span><br/>
-                        <label htmlFor=""><b>Pressure: </b></label>
-                        <span>{city?.main?.pressure}</span><br/>
-                        <label htmlFor=""><b>Humidity: </b></label>
-                        <span>{city?.main?.humidity}</span><br/>
-                        <label htmlFor=""><b>Max temperature: </b></label>
-                        <span>{city?.main?.temp_max}</span><br/>
-                        <label htmlFor=""><b>Min temperature: </b></label>
-                        <span>{city?.main?.temp_min}</span>
-                    </div>
+                    <Details city={city} />
                 </div>
                 <div className="col-9" >
                     { city?.coord?.lat ?
@@ -151,7 +139,7 @@ const mapStateToProps = state => ({
 });
 
 export default connect(mapStateToProps, null)(GoogleApiWrapper({
-    apiKey: ("AIzaSyDE2XTOO3mc5CnZSdVG0xVfs8L9DidM__0"),
+    apiKey: ("AIzaSyB5UcwUUe4l2aXDcZbKvHZmcxi4rb04k8c"),
     LoadingContainer: LoadingContainer
 })(DisplayForecast));
 
