@@ -2,7 +2,26 @@ import React, { useState, useEffect } from 'react';
 import {Map, Marker, GoogleApiWrapper} from 'google-maps-react';
 import { connect } from 'react-redux';
 import axios from 'axios';
-import favorite from './data/favoriteshow'
+import favorite from './data/favoriteshow';
+
+
+const cors = require('cors');
+const morgan = require('morgan');
+const fs = require('fs');
+const bodyParser = require('body-parser');
+const promisify = require('util').promisify;
+
+// const writeFilePromise = promisify(fs.writeFile);
+// const WriteTextToFileAsync = async (contentToWrite) => {
+//
+//     try {
+//         // FIXME: give your own path, this is just a dummy path
+//         const path = './data/favoriteshow.json';
+//         await writeFilePromise(contentToWrite, favorite);
+//     } catch(err) {
+//         throw new Error(`Could not write file because of {err}`);
+//     }
+// }
 
 const style = {
     table: {
@@ -53,6 +72,10 @@ const style = {
         fontSize: "20px",
         color: "black"
     },
+    showImage : {
+      height :'100%',
+      width: '100%'
+    },
     divFlex : {
         display: "flex",
         justifyContent: "center",
@@ -64,45 +87,45 @@ function LoadingContainer() {
 }
 
 const List = ({ search }) => {
-    const [city, setCity] = useState(null);
-    const [listCities, setListCities] = useState([]);
+
+    const [listFavorites, setListFavorites] = useState([]);
+    const [listShow, setListShows] = useState([]);
+    const [showFavorites, setShowFavorites] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [showSelected, setShowSelected] = useState(false);
+    const [showIMDB, setShowIMDB] = useState(false);
 
     useEffect(() => {
         (async () => {
             try {
-                setListCities([]);
+
+                let lstFavorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+                setListFavorites(lstFavorites);
                 const currentSearch = search ? 'search/' : '';
                 const searchDynamic = search ? `?q=${search}` : '';
-                //const url =`http://api.tvmaze.com/shows`;
-                //http://api.tvmaze.com/search/shows?q=${search}
-                //http://api.tvmaze.com/shows
-                //setListCities(JSON.parse(localStorage.getItem("cities") || "[]"));
-                //axios.get(`http://api.openweathermap.org/data/2.5/weather?APPID=d1e84cb66ca1147838f89a129355af31&q=${search}`)
+
                 axios.get(`http://api.tvmaze.com/${currentSearch}shows${searchDynamic}`)
-                    .then((data) => {debugger;
+                    .then((data) => {
                     if(data.data) {
                        // this._app.purchaseDetails = purchaseDetails.concat();;
                         let arrayTemp = [];
-                        let counter = 0;
                         data.data.map(item => {
-
-                            const newCity = {
+                            const newShow = {
                                 id: item?.show?.id || item.id,
-                                name: item?.show?.name || item.name
+                                name: item?.show?.name || item.name,
+                                imageMedium: item?.show?.image?.medium || item.image.medium ,
+                                imageOriginal: item?.show?.image?.original || item.image.original,
+                                summary: item?.show?.summary || item.summary,
+                                imdb: item?.show?.externals?.imdb || item.externals.imdb
                             }
-                            arrayTemp.push(newCity);
-                            favorite.push(newCity);
-                            // counter++;
-                            // if(counter === 10){
-                            //     return false;
-                            // }
+                            arrayTemp.push(newShow);
                         });
-                        setListCities(arrayTemp);
+                        setListShows(arrayTemp);
 
                         // setCity(newCity);
                         // if(listCities.length === 5){
                         //     listCities.pop();
-                        // }
+                        // }setListShows
                         //
                         // const cityExists = listCities.find(item => item.id === newCity.id);
                         // if(!cityExists) {
@@ -114,35 +137,99 @@ const List = ({ search }) => {
                     }
                 })
                 .catch(error => {
-                    setCity(null);
+                    //setCity(null);
                 });
             } catch (error) {
-                setCity(null);
+                //setCity(null);
             };
         })();
 
     }, [search]);
 
-    const rows = listCities.map((item, index ) => {
+    const addFavorites = (show, e) =>{
+
+        if(e){
+            e.preventDefault()
+        }
+        let tmpListFavorite = [];
+
+        if(existsInFavorites(show.id)){
+            tmpListFavorite = listFavorites.filter(item => item.id !== show.id);
+        } else {
+            tmpListFavorite = [...listFavorites, show];
+        }
+
+        setListFavorites(tmpListFavorite);
+        localStorage.setItem("favorites", JSON.stringify(tmpListFavorite));
+
+
+    }
+    const showImdb = (e,show) => {
+        e.preventDefault();
+        setShowIMDB(true);
+    }
+
+    const Modal = ({ show, handleClose, children, element }) => {
+        const showHideClassName = show ? "modal display-block" : "modal display-none";
+        const exists = existsInFavorites(element.id || -1);
+        //element.imdb = element.imdb ? "https://www.imdb.com/title/"+ element.imdb : element.imdb ;
+        return (
+            <div className={showHideClassName}>
+                <section className="modal-main text-center">
+                    <button onClick={handleClose} type="button" className="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <div>
+                        <h2>{element?.name}</h2>
+                        <a href="" onClick={ (e)=> addFavorites(element, e)}>
+                            { exists ? 'Remove from favorites' :'Add to favorites'}
+                        </a>
+                        <br/>
+                        <img src={element?.imageMedium} />
+                        <br/>
+
+                        <div dangerouslySetInnerHTML={{__html: element?.summary}} />
+                        <br/>
+                        <a className={element.imdb ? 'display-block' : 'display-none'} href={element.imdb ? 'https://www.imdb.com/title/'+ element.imdb : ''} target="_blank">View IMDB</a>
+                    </div>
+                </section>
+            </div>
+        );
+    };
+
+    const existsInFavorites = (id) => {
+        if (listFavorites.find( favorite => favorite.id === id)){
+            return true;
+        }
+        return false;
+    }
+
+    const viewFavorites = (e) => {
+        e.preventDefault();
+        setShowFavorites(true);
+        setListShows(listFavorites);
+    }
+
+    const openModal = (show) =>{
+        setShowSelected(show);
+        setShowModal(true);
+
+    }
+
+    const rows = listShow.map((item, index ) => {
 
         return  (<tr key={index}>
-            <td className="text-center"> <div className="square" style={style.squareStyle}></div></td>
-            <td>{item.name}</td>
             <td className="text-center">
-                <input type="radio" name={item.name} value={item.id}/>
+                <div className="square" style={style.squareStyle}>
+                    <img src={item.imageMedium} style={style.showImage}/>
+                </div>
+            </td>
+            <td><span onClick={()=>openModal(item)}>{item.name}</span></td>
+            <td className="text-center">
+                <input type="radio" checked={ existsInFavorites(item.id)} name={item.name} value={item.id} onChange={()=> addFavorites(item)}/>
             </td>
         </tr>)
     });
-
-    const removeCity = (e, id) => {
-        e.preventDefault();
-        setListCities(JSON.parse(localStorage.getItem("cities") || "[]"));
-        if(listCities.length) {
-            const lstTemp = listCities.filter(city => city.id !== id);
-            setListCities(lstTemp);
-            localStorage.setItem("cities", JSON.stringify(lstTemp));
-        }
-    }
 
     return (
         <div>
@@ -153,7 +240,9 @@ const List = ({ search }) => {
                         <thead>
                         <tr>
                             <th colSpan="3" className="text-center">
-                                <button>View Favorites</button>
+                                <button onClick={(e) => viewFavorites(e)}>
+                                    {showFavorites ? 'View All' : 'View Favorites'}
+                                </button>
                             </th>
                         </tr>
                         </thead>
@@ -163,6 +252,10 @@ const List = ({ search }) => {
                     </table>
                 </div>
             </div>
+            <Modal element={showSelected} show={showModal} handleClose={()=>setShowModal(false)}>
+                {/*<p>Modal</p>*/}
+                {/*<p>Data</p>*/}
+            </Modal>
         </div>
     )
 }
