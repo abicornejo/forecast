@@ -1,14 +1,14 @@
 import React from 'react';
-import Search from './components/Search';
-import DisplayForecast from './components/DisplayForecast';
+import Filter from './components/Filter';
+import List from './components/List';
 import './App.css';
 
 const App = () => {
 
   return (
       <div className="container">
-        <Search />
-        <DisplayForecast />
+        <Filter />
+        <List />
       </div>
   );
 }
